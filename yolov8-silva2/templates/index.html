@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tourist Analysis Dashboard</title>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            padding: 10px 0;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .video-container {
+            flex: 2;
+            margin-right: 20px;
+        }
+
+        .video-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .charts-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            width: 100% !important;
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #people_count {
+            font-size: 2em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="#analytics">Analytics</a>
+    </div>
+
+    <div class="container">
+        <h1>Tourist counts Dashboard</h1>
+        <h1>People Count: <span id="people_count">{{ people_count }}</span></h1>
+
+        <div class="content">
+            <div class="video-container">
+                <img src="{{ url_for('video_feed') }}">
+            </div>
+            <div class="charts-container">
+                <!-- Line chart for tourist data -->
+                <canvas id="touristChart"></canvas>
+                <!-- Pie chart for tourist data distribution -->
+                <canvas id="touristPieChart"></canvas>
+                <!-- Bar chart for tourist data -->
+                <canvas id="touristBarChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const peopleCountElement = document.getElementById("people_count");
+
+                const touristBarChart = new Chart("touristBarChart", {
+                    type: "bar",
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            backgroundColor: ["red", "green", "blue", "orange", "brown"],
+                            data: []
+                        }]
+                    },
+                    options: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: "Tourist Counts Over Time"
+                        }
+                    }
+                });
+
+                const touristPieChart = new Chart("touristPieChart", {
+                    type: "pie",
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            backgroundColor: ["red", "green", "blue", "orange", "brown"],
+                            data: []
+                        }]
+                    },
+                    options: {
+                        title: {
+                            display: true,
+                            text: "Distribution of Tourist Counts"
+                        }
+                    }
+                });
+
+                const touristLineChart = new Chart("touristChart", {
+                    type: "line",
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            backgroundColor: "rgba(75,192,192,0.4)",
+                            borderColor: "rgba(75,192,192,1)",
+                            data: []
+                        }]
+                    },
+                    options: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: "Tourist Data Over Time"
+                        }
+                    }
+                });
+
+                function updateCharts() {
+                    fetch('/tourist_count_data')
+                        .then(response => response.json())
+                        .then(data => {
+                            const timestamps = Object.keys(data);
+                            const counts = Object.values(data);
+
+                            // Update the people count display
+                            if (counts.length > 0) {
+                                peopleCountElement.textContent = counts[0];
+                            }
+
+                            // Update bar chart
+                            touristBarChart.data.labels = timestamps;
+                            touristBarChart.data.datasets[0].data = counts;
+                            touristBarChart.update();
+
+                            // Update pie chart
+                            touristPieChart.data.labels = timestamps;
+                            touristPieChart.data.datasets[0].data = counts;
+                            touristPieChart.update();
+
+                            // Update line chart
+                            touristLineChart.data.labels = timestamps;
+                            touristLineChart.data.datasets[0].data = counts;
+                            touristLineChart.update();
+                        });
+                }
+
+                // Update the charts immediately on load
+                updateCharts();
+
+                // Update the charts every 2 seconds
+                setInterval(updateCharts, 2000);
+            });
+        </script>
+    </div>
+</body>
+</html>
